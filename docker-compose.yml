@@ -1,0 +1,130 @@
+services:
+  conductor:
+    image: alpine/curl:8.8.0
+    container_name: conductor
+    ports:
+      - "9204:9204"
+    volumes:
+      - ./configurationFiles/elasticsearchConfigs/quickstart_index_template.json:/usr/share/elasticsearch/config/quickstart_index_template.json
+      - ./configurationFiles/elasticsearchConfigs/es-docs:/es-docs
+      - ./conductorScripts:/scripts
+      - ./health:/health
+    environment:
+      - PROFILE=${PROFILE:-arrangerDev}
+    command: >
+      sh -c '
+        set -e
+          echo "Profile is set to: $PROFILE"
+          case "$PROFILE" in
+            arrangerDev)
+              echo "Running Arranger development environment..."
+              chmod +x scripts/deployments/arrangerDev.sh
+              scripts/deployments/arrangerDev.sh
+              ;;
+            stageDev)
+              echo "Running Stage development environment..."
+              chmod +x scripts/deployments/stageDev.sh
+              scripts/deployments/stageDev.sh
+              ;;
+            platform)
+              echo "Running platform deployment..."
+              chmod +x scripts/deployments/platform.sh
+              scripts/deployments/platform.sh
+              ;;
+            *)
+              echo "Invalid profile: $PROFILE. Available options are [arrangerDev, stageDev, platform]."
+              exit 1
+              ;;
+          esac
+        exit 0
+      '
+    healthcheck:
+      test: ["CMD", "test", "-f", "/health/conductor_health"]
+      interval: 5s
+      timeout: 40s
+      retries: 100
+      start_period: 30s
+
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.28
+    container_name: elasticsearch
+    platform: linux/amd64
+    ports:
+      - "9200:9200"
+    environment:
+      discovery.type: single-node
+      cluster.name: workflow.elasticsearch
+      ES_JAVA_OPTS: "-Xms512m -Xmx2048m"
+      ELASTIC_PASSWORD: myelasticpassword
+      xpack.security.enabled: "true"
+      network.host: 0.0.0.0
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --silent --fail localhost:9200/_cluster/health?wait_for_status=green&timeout=50s || exit 1",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 25s
+
+
+  arranger-server:
+    image: ghcr.io/overture-stack/arranger-server:3.0.0-beta.33
+    container_name: arranger-server
+    platform: linux/amd64
+    depends_on:
+      conductor:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./configurationFiles/arrangerConfigs/base.json:/app/modules/server/configs/base.json
+      - ./configurationFiles/arrangerConfigs/extended.json:/app/modules/server/configs/extended.json
+      - ./configurationFiles/arrangerConfigs/facets.json:/app/modules/server/configs/facets.json
+      - ./configurationFiles/arrangerConfigs/matchbox.json:/app/modules/server/configs/matchbox.json
+      - ./configurationFiles/arrangerConfigs/table.json:/app/modules/server/configs/table.json
+    environment:
+      ENABLE_LOGS: "false"
+      ES_HOST: http://elasticsearch:9200
+      ES_USER: elastic
+      ES_PASS: myelasticpassword
+
+
+  stage:
+    build: ./stage-src
+    container_name: stage
+    platform: linux/amd64
+    depends_on:
+      conductor:
+        condition: service_healthy
+      arranger-server:
+        condition: service_started
+    ports:
+      - "3000:3000"
+    environment:
+      # Branding Seed-ALS
+      NEXT_PUBLIC_LAB_NAME: Seed-ALS Portal
+      NEXT_PUBLIC_ADMIN_EMAIL: contacto@seed-als.org
+      NEXT_PUBLIC_DEBUG: "true"
+      NEXT_PUBLIC_SHOW_MOBILE_WARNING: "true"
+
+      NEXT_PUBLIC_AUTH_PROVIDER: none
+
+      NEXT_PUBLIC_ARRANGER_DOCUMENT_TYPE: file
+      NEXT_PUBLIC_ARRANGER_INDEX: file_centric
+
+      NEXTAUTH_SECRET: "PEGA_AQUI_EL_VALOR"
+      NEXTAUTH_URL: "http://localhost:3000"
+
+      NEXT_PUBLIC_ARRANGER_API_URL: http://arranger-server:5050
+      NEXT_PUBLIC_ARRANGER_MANIFEST_COLUMNS: repositories.code,analysis.analysis_id,object_id,study_id,file_type,file.name,file.size,file.md5sum,file.index_file.object_id,donors.donor_id,donors.specimens.samples.sample_id
