@@ -1,0 +1,9 @@
+.env.test
+.env.schema
+.next
+.git
+.gitignore
+node_modules
+Dockerfile
+.dockerignore
+npm-debug.log*
