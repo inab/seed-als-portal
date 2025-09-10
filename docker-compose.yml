@@ -101,7 +101,8 @@ services:
 
 
   stage:
-    build: ./stage-src
+    build:
+      context: ./stage-src
     container_name: stage
     platform: linux/amd64
     depends_on:
@@ -111,20 +112,26 @@ services:
         condition: service_started
     ports:
       - "3000:3000"
+    volumes:
+      - ./stage-src:/usr/src
+      - /usr/src/node_modules
+      - /usr/src/.next
+      - ./stage-src/public/static/dms_user_assets:/usr/src/public/static/dms_user_assets
+    command: ["npm","run","dev"]
     environment:
-      # Branding Seed-ALS
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: "1"
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+
       NEXT_PUBLIC_LAB_NAME: Seed-ALS Portal
       NEXT_PUBLIC_ADMIN_EMAIL: contacto@seed-als.org
       NEXT_PUBLIC_DEBUG: "true"
       NEXT_PUBLIC_SHOW_MOBILE_WARNING: "true"
-
       NEXT_PUBLIC_AUTH_PROVIDER: none
-
       NEXT_PUBLIC_ARRANGER_DOCUMENT_TYPE: file
       NEXT_PUBLIC_ARRANGER_INDEX: file_centric
-
       NEXTAUTH_SECRET: "PEGA_AQUI_EL_VALOR"
       NEXTAUTH_URL: "http://localhost:3000"
-
       NEXT_PUBLIC_ARRANGER_API_URL: http://arranger-server:5050
       NEXT_PUBLIC_ARRANGER_MANIFEST_COLUMNS: repositories.code,analysis.analysis_id,object_id,study_id,file_type,file.name,file.size,file.md5sum,file.index_file.object_id,donors.donor_id,donors.specimens.samples.sample_id

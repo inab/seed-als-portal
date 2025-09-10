@@ -4,7 +4,7 @@
 	"private": true,
 	"scripts": {
 		"clearNextTemp": "rm -rf ./.next",
-		"dev": "npm run clearNextTemp && next dev",
+		"dev": "npm run clearNextTemp && next dev -H 0.0.0.0 -p 3000",
 		"build": "npm run clearNextTemp && next build",
 		"patchTS": "ts-patch install -s",
 		"prepare": "npm run patchTS",

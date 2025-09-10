@@ -43,7 +43,8 @@ The Overture Platform includes the following Overture Components:
 
 ## To start de dev app
 ```bash
-docker compose up -d --build
+docker compose build
+docker compose up
 ```
 
 ## To start just FrontEnd app
