@@ -31,10 +31,47 @@ import { isValidJwt } from '../global/utils/egoTokenUtils';
 import { getConfig } from '../global/config';
 import { decryptContent } from '@/global/utils/crypt';
 
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+import { Global, css } from '@emotion/react';
 
-const theme = createTheme();
+// Global font styles
+const globalStyles = css`
+  @font-face {
+    font-family: 'Geomanist';
+    src: url('/fonts/woff2/Geomanist-Light-WZ.woff2') format('woff2'),
+         url('/fonts/otf/Geomanist-Light-WZ.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Geomanist';
+    src: url('/fonts/woff2/Geomanist-Book-WZ.woff2') format('woff2'),
+         url('/fonts/otf/Geomanist-Book-WZ.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Geomanist';
+    src: url('/fonts/woff2/Geomanist-Bold-WZ.woff2') format('woff2'),
+         url('/fonts/otf/Geomanist-Bold-WZ.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  body {
+    font-family: 'Geomanist', 'Calibri', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+`;
 
 const DMSApp = ({
   Component,
@@ -69,12 +106,10 @@ const DMSApp = ({
 
   return (
     <SessionProvider session={session}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Root pageContext={ctx} session={session}>
-          <Component {...pageProps} />
-        </Root>
-      </ThemeProvider>
+      <Global styles={globalStyles} />
+      <Root pageContext={ctx} session={session}>
+        <Component {...pageProps} />
+      </Root>
     </SessionProvider>
   );
 };
