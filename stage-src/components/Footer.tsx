@@ -57,7 +57,7 @@ const Footer = () => {
 					src="/images/financing-logos.png"
 					alt="Logos de financiación"
 					css={css`
-						max-width: 600px;
+						max-width: 700px;
 						height: auto;
 						width: 100%;
 						margin-bottom: 15px;
@@ -68,7 +68,7 @@ const Footer = () => {
 				/>
 				<div css={(theme) => css`
 					font-family: 'Geomanist', 'Calibri', sans-serif;
-					font-size: 10px;
+					font-size: 9px;
 					font-weight: 400;
 					line-height: 1.4;
 					max-width: 800px;
